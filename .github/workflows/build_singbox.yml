@@ -176,8 +176,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_name: v${puernya_VERSION}
-          tag: v${puernya_VERSION}
+          release_name: "v${puernya_VERSION}"
+          tag: "v${puernya_VERSION}"
           overwrite: true
           body: "[sing-box][PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
           file_glob: true
