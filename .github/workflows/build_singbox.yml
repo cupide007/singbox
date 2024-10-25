@@ -145,7 +145,7 @@ jobs:
           archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
           new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
           # `PuerNya` cores
-          for((i=0;i<9;i++));do
+          for((i=0;i<12;i++));do
             mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
@@ -170,8 +170,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_name: sing-box
-          tag: sing-box
+          release_name: "sing-box v${puernya_VERSION}"
+          tag: "v${puernya_VERSION}"
           overwrite: true
           body: "[sing-box][PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
           file_glob: true
