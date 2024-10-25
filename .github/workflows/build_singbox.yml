@@ -127,9 +127,6 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@main
 
-      - name: Debug puernya_VERSION
-        run: echo "PuerNya version: ${{ env.puernya_VERSION }}"
-
       - name: Download files from workspace
         uses: actions/download-artifact@v4
         with:
