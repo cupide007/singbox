@@ -302,6 +302,17 @@ jobs:
           mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.dev_VERSION }}.exe
           rm -rf ./tmp*
           
+      - name: Release and upload `sing-box` assets (dev release)
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          release_name: "${{ env.dev_VERSION }}"
+          tag: "v${{ env.dev_VERSION }}"
+          overwrite: true
+          body: "[dev 版](https://github.com/PuerNya/sing-box/tree/building)Release 版、Dev 版内核"
+          file_glob: true
+          file: ./sing-box/*
+          
       - name: Release and upload `sing-box` assets
         uses: svenstaro/upload-release-action@v2
         with:
