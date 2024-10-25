@@ -72,8 +72,14 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
-      - name: Initialize Go module
+      - name: Ensure project structure is correct
         run: |
+          if [ ! -d cmd ]; then
+            mkdir -p cmd
+          fi
+          if [ ! -d cmd/sing-box ]; then
+            mkdir -p cmd/sing-box
+          fi
           if [ ! -f go.mod ]; then
             go mod init sing-box
           fi
