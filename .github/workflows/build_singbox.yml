@@ -67,6 +67,11 @@ jobs:
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
           - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # android
+          - { name: android-arm64, goos: android, goarch: arm64 }
+          - { name: android-arm, goos: android, goarch: arm }
+          - { name: android-386, goos: android, goarch: 386 }
+          - { name: android-amd64, goos: android, goarch: amd64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -118,207 +123,13 @@ jobs:
           path: sing-box*
           compression-level: 9
 
-  release:
-    runs-on: ubuntu-latest
-    needs: go
-    outputs:
-      release_version: ${{ steps.release.outputs.release_version }}
-      release_tags: ${{ steps.release.outputs.release_tags }}
-    steps:
-      - name: Checkout `main`
-        uses: actions/checkout@v4
-        with:
-          repository: SagerNet/sing-box
-          ref: main
-          fetch-depth: 0
-
-      - name: Setup `Go`
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ needs.go.outputs.version }}
-
-      - name: Get `sing-box Release` version
-        id: release
-        run: |
-          git remote add sekai https://github.com/SagerNet/sing-box.git
-          git fetch --tags sekai
-          release_version=$(CGO_ENABLED=0 go run ./cmd/internal/read_tag)
-          echo release_version=$release_version >> $GITHUB_OUTPUT
-          echo release_tags=with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls,with_ech >> $GITHUB_OUTPUT
-
-  release_cross:
-    strategy:
-      matrix:
-        include:
-          # linux
-          - { name: linux-amd64, goos: linux, goarch: amd64, goamd64: v1 }
-          - { name: linux-amd64-v3, goos: linux, goarch: amd64, goamd64: v3 }
-          - { name: linux-armv5, goos: linux, goarch: arm, goarm: 5 }
-          - { name: linux-armv6, goos: linux, goarch: arm, goarm: 6 }
-          - { name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
-          - { name: linux-arm64, goos: linux, goarch: arm64 }
-          - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
-          - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
-          - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          # windows
-          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          - { name: windows-arm64, goos: windows, goarch: arm64 }
-
-      fail-fast: false
-    runs-on: ubuntu-latest
-    needs:
-      - go
-      - release
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-      GOAMD64: ${{ matrix.goamd64 }}
-      GOARM: ${{ matrix.goarm }}
-      GOMIPS: ${{ matrix.gomips }}
-      CGO_ENABLED: 0
-      release_TAGS: ${{ needs.release.outputs.release_tags }}
-      release_VERSION: ${{ needs.release.outputs.release_version }}
-    steps:
-      - name: Checkout `main`
-        uses: actions/checkout@v4
-        with:
-          repository: SagerNet/sing-box
-          ref: main
-          fetch-depth: 1
-
-      - name: Setup `Go`
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ needs.go.outputs.version }}
-
-      - name: Revert golang1.23 commit for Windows 7/8
-        if: ${{ matrix.goos == 'windows' }}
-        run: |
-          cd $(go env GOROOT)
-          curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
-
-      - name: Build `sing-box Release` core
-        id: build
-        run: go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${release_VERSION}' -s -w -buildid=" -tags "${release_TAGS}" ./cmd/sing-box
-
-      - name: Upload files to workspace
-        uses: actions/upload-artifact@v4
-        with:
-          name: sing-box-release-${{ matrix.name }}
-          path: sing-box*
-          compression-level: 9
-
-  dev:
-    runs-on: ubuntu-latest
-    needs: go
-    outputs:
-      dev_version: ${{ steps.dev.outputs.dev_version }}
-      dev_tags: ${{ steps.dev.outputs.dev_tags }}
-    steps:
-      - name: Checkout `dev`
-        uses: actions/checkout@v4
-        with:
-          repository: SagerNet/sing-box
-          ref: dev
-          fetch-depth: 0
-
-      - name: Setup `Go`
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ needs.go.outputs.version }}
-
-      - name: Get `sing-box Dev` version
-        id: dev
-        run: |
-          git remote add sekai https://github.com/SagerNet/sing-box.git
-          git fetch --tags sekai
-          dev_version=$(CGO_ENABLED=0 go run ./cmd/internal/read_tag)
-          echo dev_version=$dev_version >> $GITHUB_OUTPUT
-          echo dev_tags=with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls,with_ech >> $GITHUB_OUTPUT
-
-  dev_cross:
-    strategy:
-      matrix:
-        include:
-          # linux
-          - { name: linux-amd64, goos: linux, goarch: amd64, goamd64: v1 }
-          - { name: linux-amd64-v3, goos: linux, goarch: amd64, goamd64: v3 }
-          - { name: linux-armv5, goos: linux, goarch: arm, goarm: 5 }
-          - { name: linux-armv6, goos: linux, goarch: arm, goarm: 6 }
-          - { name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
-          - { name: linux-arm64, goos: linux, goarch: arm64 }
-          - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
-          - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
-          - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          # windows
-          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          - { name: windows-arm64, goos: windows, goarch: arm64 }
-
-      fail-fast: false
-    runs-on: ubuntu-latest
-    needs:
-      - go
-      - dev
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-      GOAMD64: ${{ matrix.goamd64 }}
-      GOARM: ${{ matrix.goarm }}
-      GOMIPS: ${{ matrix.gomips }}
-      CGO_ENABLED: 0
-      dev_TAGS: ${{ needs.dev.outputs.dev_tags }}
-      dev_VERSION: ${{ needs.dev.outputs.dev_version }}
-    steps:
-      - name: Checkout `dev`
-        uses: actions/checkout@v4
-        with:
-          repository: SagerNet/sing-box
-          ref: dev
-          fetch-depth: 1
-
-      - name: Setup `Go`
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ needs.go.outputs.version }}
-
-      - name: Revert golang1.23 commit for Windows 7/8
-        if: ${{ matrix.goos == 'windows' }}
-        run: |
-          cd $(go env GOROOT)
-          curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
-
-      - name: Build `sing-box Dev` core
-        id: build
-        run: go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${dev_VERSION}' -s -w -buildid=" -tags "${dev_TAGS}" ./cmd/sing-box
-
-      - name: Upload files to workspace
-        uses: actions/upload-artifact@v4
-        with:
-          name: sing-box-dev-${{ matrix.name }}
-          path: sing-box*
-          compression-level: 9
-
   push_sing-box:
     needs:
       - puernya_cross
       - puernya
-      - release_cross
-      - release
-      - dev_cross
-      - dev
     runs-on: ubuntu-latest
     env:
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
-      release_VERSION: ${{ needs.release.outputs.release_version }}
-      dev_VERSION: ${{ needs.dev.outputs.dev_version }}
     steps:
       - name: Clone Repository
         uses: actions/checkout@main
@@ -331,27 +142,19 @@ jobs:
       - name: Zip `sing-box` cores by `tar`
         run: |
           mkdir -p ./tmp-sing-box/compress/
-          archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
-          new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat)
+          archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
+          new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
           # `PuerNya` cores
           for((i=0;i<9;i++));do
             mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           done
-
-          # `Release` cores
-          for((i=0;i<9;i++));do
-            mv -f "./tmp-sing-box/sing-box-release-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
+          # `PuerNya` cores for Android
+          for((i=8;i<12;i++));do
+            mv -f "./tmp-sing-box/sing-box-puernya-android-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-release-linux-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
-          done
-
-          # `dev` cores
-          for((i=0;i<9;i++));do
-            mv -f "./tmp-sing-box/sing-box-dev-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
-            chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-linux-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           done
 
       - name: Move `sing-box` cores
@@ -363,17 +166,6 @@ jobs:
           mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3.exe
           mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64.exe
 
-          # `Release` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-release-windows-amd64/sing-box.exe ./sing-box/sing-box-release-windows-amd64.exe
-          mv -f ./tmp-sing-box/sing-box-release-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-release-windows-amd64v3.exe
-          mv -f ./tmp-sing-box/sing-box-release-windows-arm64/sing-box.exe ./sing-box/sing-box-release-windows-arm64.exe
-
-          # `dev` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64.exe
-          rm -rf ./tmp*
-
       - name: Release and upload `sing-box` assets
         uses: svenstaro/upload-release-action@v2
         with:
@@ -381,7 +173,7 @@ jobs:
           release_name: sing-box
           tag: sing-box
           overwrite: true
-          body: "[sing-box](https://github.com/SagerNet/sing-box) Release 版、Dev 版和 [PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
+          body: "[sing-box][PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
           file_glob: true
           file: ./sing-box/*
 
@@ -393,8 +185,6 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b sing-box
           git add ./sing-box-puernya* && git commit -m "更新 sing-box 内核 PuerNya 版至 v${puernya_VERSION}"
-          git add ./sing-box-release* && git commit -m "更新 sing-box 内核 Release 版至 v${release_VERSION}"
-          git add ./sing-box-dev* && git commit -m "更新 sing-box 内核 Dev 版至 v${dev_VERSION}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin sing-box
 
