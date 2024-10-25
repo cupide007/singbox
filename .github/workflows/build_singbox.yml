@@ -70,9 +70,9 @@ jobs:
           - { name: windows-arm64, goos: windows, goarch: arm64 }
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
-          - { name: android-arm, goos: android, goarch: arm, cgo_enabled: true }
-          - { name: android-386, goos: android, goarch: 386, cgo_enabled: true }
-          - { name: android-amd64, goos: android, goarch: amd64, cgo_enabled: true }
+          # - { name: android-arm, goos: android, goarch: arm, cgo_enabled: true }
+          # - { name: android-386, goos: android, goarch: 386, cgo_enabled: true }
+          # - { name: android-amd64, goos: android, goarch: amd64, cgo_enabled: true }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -170,13 +170,13 @@ jobs:
           archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
           new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64 arm 386 amd64)
           # `PuerNya` cores
-          for((i=0;i<12;i++));do
+          for((i=0;i<9;i++));do
             mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           done
           # `PuerNya` cores for Android
-          for((i=8;i<12;i++));do
+          for((i=8;i<9;i++));do
             mv -f "./tmp-sing-box/sing-box-puernya-android-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-${new_name[i]}-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
