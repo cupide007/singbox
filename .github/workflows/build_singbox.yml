@@ -232,7 +232,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
-      puernya_dev_VERSION: ${{ needs.puernya_dev.outputs.puernya_dev_version }}
+      dev_VERSION: ${{ needs.dev.outputs.dev_version }}
     steps:
       - name: Clone Repository
         uses: actions/checkout@main
@@ -297,9 +297,9 @@ jobs:
           mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${{ env.puernya_VERSION }}.exe
 
           # `dev` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64-${{ env.puernya_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3-${{ env.puernya_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.puernya_VERSION }}.exe
+          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64-${{ env.dev_VERSION }}.exe
+          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3-${{ env.dev_VERSION }}.exe
+          mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.dev_VERSION }}.exe
           rm -rf ./tmp*
           
       - name: Release and upload `sing-box` assets
