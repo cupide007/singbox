@@ -82,7 +82,7 @@ jobs:
       GOAMD64: ${{ matrix.goamd64 }}
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
-      CGO_ENABLED: ${{ matrix.cgo_enabled || 0 }}
+      CGO_ENABLED: 0
       puernya_TAGS: ${{ needs.puernya.outputs.puernya_tags }}
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
     steps:
@@ -104,13 +104,8 @@ jobs:
       - name: Build `sing-box PuerNya` core
         id: build
         run: |
-          if [ "$CGO_ENABLED" = "1" ]; then
-            echo "Building with CGO enabled for ${GOOS}/${GOARCH}"
-            go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
-          else
-            echo "Building without CGO for ${GOOS}/${GOARCH}"
-            go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
-          fi
+          echo "Building for ${GOOS}/${GOARCH}"
+          go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
           ls -l sing-box*
 
       - name: Upload files to workspace
@@ -176,7 +171,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          release_name: "v${puernya_VERSION}"
+          release_name: "sing-box v${puernya_VERSION}"
           tag: "v${puernya_VERSION}"
           overwrite: true
           body: "[sing-box][PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
