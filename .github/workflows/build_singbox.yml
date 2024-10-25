@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: PuerNya/sing-box
-          ref: building
+          ref: dev-next
           fetch-depth: 1
 
       - name: Fix sniff
@@ -183,6 +183,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           release_name: "${{ env.puernya_DEV_VERSION }}"
           tag: "v${{ env.puernya_DEV_VERSION }}"
+          prerelease: true  # Mark as pre-release
           overwrite: true
           body: "[sing-box][PuerNya 版](https://github.com/PuerNya/sing-box/tree/building)内核"
           file_glob: true
