@@ -72,6 +72,12 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
+      - name: Initialize Go module
+        run: |
+          if [ ! -f go.mod ]; then
+            go mod init sing-box
+          fi
+
       - name: Build and package `sing-box` cores
         run: |
           mkdir -p ./tmp-sing-box/
