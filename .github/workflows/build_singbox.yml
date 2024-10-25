@@ -22,7 +22,7 @@ jobs:
         run: |
           echo version=$(curl -sSL https://raw.githubusercontent.com/actions/go-versions/update-versions-manifest-file/versions-manifest.json | grep '"version"' | head -1 | awk -F'"' '{print $4}') >> $GITHUB_OUTPUT
 
-    puernya:
+  puernya:
     runs-on: ubuntu-latest
     needs: go
     outputs:
@@ -124,7 +124,7 @@ jobs:
           path: sing-box*
           compression-level: 9
 
-    push_sing_box:
+  push_sing_box:
     needs:
       - puernya_cross
       - puernya
@@ -135,9 +135,6 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@main
-
-      - name: Debug puernya_VERSION
-        run: echo "PuerNya version: ${{ env.puernya_VERSION }}"
 
       - name: Debug puernya_DEV_VERSION
         run: echo "PuerNya dev version: ${{ env.puernya_DEV_VERSION }}"
