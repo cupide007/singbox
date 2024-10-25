@@ -70,9 +70,9 @@ jobs:
           - { name: windows-arm64, goos: windows, goarch: arm64 }
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
-          - { name: android-arm, goos: android, goarch: arm }
+          - { name: android-arm, goos: android, goarch: arm, cgo_enabled: true }
           - { name: android-386, goos: android, goarch: 386, cgo_enabled: true }
-          - { name: android-amd64, goos: android, goarch: amd64 }
+          - { name: android-amd64, goos: android, goarch: amd64, cgo_enabled: true }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -104,15 +104,6 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
-      - name: Revert golang1.23 commit for Windows 7/8
-        if: ${{ matrix.goos == 'windows' }}
-        run: |
-          cd $(go env GOROOT)
-          curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
-
       - name: Install Android NDK
         if: ${{ matrix.cgo_enabled }}
         run: |
@@ -123,18 +114,25 @@ jobs:
           export NDK_HOME=/opt/android-ndk-r21e
           export PATH=$NDK_HOME:$PATH
 
+      - name: Set up CGO environment
+        if: ${{ matrix.cgo_enabled }}
+        run: |
+          if [ "$GOARCH" = "386" ]; then
+            export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang
+            export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++
+          elif [ "$GOARCH" = "amd64" ]; then
+            export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
+            export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang++
+          elif [ "$GOARCH" = "arm" ]; then
+            export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang
+            export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang++
+          fi
+          echo "CC=$CC" >> $GITHUB_ENV
+          echo "CXX=$CXX" >> $GITHUB_ENV
+
       - name: Build `sing-box PuerNya` core
         id: build
         run: |
-          if [ "$CGO_ENABLED" = "1" ]; then
-            if [ "$GOARCH" = "386" ]; then
-              export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang
-              export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++
-            elif [ "$GOARCH" = "amd64" ]; then
-              export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
-              export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang++
-            fi
-          fi
           go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
 
       - name: Upload files to workspace
