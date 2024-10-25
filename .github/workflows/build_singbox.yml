@@ -148,7 +148,7 @@ jobs:
             if [ -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ]; then
               mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
               chmod +x ./tmp-sing-box/CrashCore
-              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
             else
               echo "File not found: ./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box"
             fi
@@ -157,7 +157,7 @@ jobs:
           if [ -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ]; then
             mv -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-arm64-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-arm64-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           else
             echo "File not found: ./tmp-sing-box/sing-box-puernya-android-arm64/sing-box"
           fi
@@ -167,9 +167,9 @@ jobs:
           mkdir -p ./sing-box/
           mv -f ./tmp-sing-box/compress/* ./sing-box/
           # `PuerNya` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64-${puernya_VERSION}.exe
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3-${puernya_VERSION}.exe
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${puernya_VERSION}.exe
+          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64-${{ env.puernya_VERSION }}.exe
+          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3-${{ env.puernya_VERSION }}.exe
+          mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${{ env.puernya_VERSION }}.exe
 
       - name: Release and upload `sing-box` assets
         uses: svenstaro/upload-release-action@v2
