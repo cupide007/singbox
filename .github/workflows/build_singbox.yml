@@ -69,9 +69,9 @@ jobs:
           - { name: windows-arm64, goos: windows, goarch: arm64 }
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
-          - { name: android-arm, goos: android, goarch: arm }
-          - { name: android-386, goos: android, goarch: 386 }
-          - { name: android-amd64, goos: android, goarch: amd64 }
+          - { name: android-arm, goos: android, goarch: arm, cgo_enabled: true }
+          - { name: android-386, goos: android, goarch: 386, cgo_enabled: true }
+          - { name: android-amd64, goos: android, goarch: amd64,cgo_enabled: true }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
       GOAMD64: ${{ matrix.goamd64 }}
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
-      CGO_ENABLED: 0
+      CGO_ENABLED: ${{ matrix.cgo_enabled || 0 }}
       puernya_TAGS: ${{ needs.puernya.outputs.puernya_tags }}
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
     steps:
@@ -111,10 +111,24 @@ jobs:
           curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
-
+      - name: Install Android NDK
+        if: ${{ matrix.cgo_enabled }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          wget https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
+          unzip android-ndk-r21e-linux-x86_64.zip -d /opt
+          export NDK_HOME=/opt/android-ndk-r21e
+          export PATH=$NDK_HOME:$PATH
+          
       - name: Build `sing-box PuerNya` core
         id: build
-        run: go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
+        run: |
+          if [ "$CGO_ENABLED" = "1" ]; then
+            export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang
+            export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++
+          fi
+          go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
 
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
