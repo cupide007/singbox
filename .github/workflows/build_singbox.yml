@@ -133,7 +133,13 @@ jobs:
       - name: Build `sing-box PuerNya` core
         id: build
         run: |
-          go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
+          if [ "$CGO_ENABLED" = "1" ]; then
+            echo "Building with CGO enabled"
+            go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
+          else
+            echo "Building without CGO"
+            go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
+          fi
 
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
