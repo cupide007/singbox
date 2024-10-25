@@ -229,8 +229,8 @@ jobs:
 
   push_sing_box:
     needs:
-      # - puernya_cross
-      # - puernya
+      - puernya_cross
+      - puernya
       - dev_cross
       - dev
     runs-on: ubuntu-latest
