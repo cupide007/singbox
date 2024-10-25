@@ -127,8 +127,13 @@ jobs:
         id: build
         run: |
           if [ "$CGO_ENABLED" = "1" ]; then
-            export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang
-            export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++
+            if [ "$GOARCH" = "386" ]; then
+              export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang
+              export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang++
+            elif [ "$GOARCH" = "amd64" ]; then
+              export CC=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
+              export CXX=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang++
+            fi
           fi
           go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
 
