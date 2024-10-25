@@ -131,12 +131,13 @@ jobs:
         id: build
         run: |
           if [ "$CGO_ENABLED" = "1" ]; then
-            echo "Building with CGO enabled"
+            echo "Building with CGO enabled for ${GOOS}/${GOARCH}"
             go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
           else
-            echo "Building without CGO"
+            echo "Building without CGO for ${GOOS}/${GOARCH}"
             go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
           fi
+          ls -l sing-box*
 
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
@@ -161,6 +162,9 @@ jobs:
         with:
           path: ./tmp-sing-box/
 
+      - name: List downloaded files
+        run: ls -R ./tmp-sing-box/
+
       - name: Zip `sing-box` cores by `tar`
         run: |
           mkdir -p ./tmp-sing-box/compress/
@@ -168,14 +172,22 @@ jobs:
           new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64)
           # `PuerNya` cores
           for((i=0;i<10;i++));do
-            mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
-            chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            if [ -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ]; then
+              mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
+              chmod +x ./tmp-sing-box/CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            else
+              echo "File not found: ./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box"
+            fi
           done
           # `PuerNya` cores for Android
-          mv -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ./tmp-sing-box/CrashCore
-          chmod +x ./tmp-sing-box/CrashCore
-          tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-arm64-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+          if [ -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ]; then
+            mv -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ./tmp-sing-box/CrashCore
+            chmod +x ./tmp-sing-box/CrashCore
+            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-arm64-${puernya_VERSION}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+          else
+            echo "File not found: ./tmp-sing-box/sing-box-puernya-android-arm64/sing-box"
+          fi
 
       - name: Move `sing-box` cores
         run: |
