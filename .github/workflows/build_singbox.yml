@@ -142,7 +142,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: PuerNya/sing-box
-          ref: dev
+          ref: dev-next
           fetch-depth: 0
 
       - name: Setup `Go`
@@ -201,7 +201,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: PuerNya/sing-box
-          ref: dev
+          ref: dev-next
           fetch-depth: 1
 
       - name: Fix sniff
