@@ -292,15 +292,15 @@ jobs:
           mkdir -p ./sing-box/
           mv -f ./tmp-sing-box/compress/* ./sing-box/
           # `PuerNya` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64-${{ env.puernya_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3-${{ env.puernya_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${{ env.puernya_VERSION }}.exe
+          # mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64-${{ env.puernya_VERSION }}.exe
+          # mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3-${{ env.puernya_VERSION }}.exe
+          # mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${{ env.puernya_VERSION }}.exe
 
           # `dev` cores for Windows
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64-${{ env.dev_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3-${{ env.dev_VERSION }}.exe
-          mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.dev_VERSION }}.exe
-          rm -rf ./tmp*
+          # mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64-${{ env.dev_VERSION }}.exe
+          # mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3-${{ env.dev_VERSION }}.exe
+          # mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.dev_VERSION }}.exe
+          # rm -rf ./tmp*
           
       - name: Release and upload `sing-box` assets (dev release)
         uses: svenstaro/upload-release-action@v2
