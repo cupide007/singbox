@@ -69,9 +69,9 @@ jobs:
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
           # windows
-          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
+          # - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
+          # - { name: windows-arm64, goos: windows, goarch: arm64 }
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
 
@@ -168,9 +168,9 @@ jobs:
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
           # windows
-          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
+          # - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
+          # - { name: windows-arm64, goos: windows, goarch: arm64 }
 
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
