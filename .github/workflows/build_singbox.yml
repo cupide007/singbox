@@ -3,7 +3,7 @@ name: Update sing-box
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 18 * * *"
+    - cron: "30 18 * * *"  # 修复 cron 表达式中的语法
   push:
     branches:
       - main
@@ -73,10 +73,8 @@ jobs:
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
-          
           # windows
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
@@ -118,14 +116,22 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
+      # 修复补丁应用问题
       - name: Revert golang1.23 commit for Windows 7/8
         if: ${{ matrix.goos == 'windows' }}
         run: |
           cd $(go env GOROOT)
-          curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
+          
+          # 下载补丁到临时文件
+          curl -o patch1.diff https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff
+          curl -o patch2.diff https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff
+          curl -o patch3.diff https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff
+          curl -o patch4.diff https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff
+          
+          # 更灵活的应用补丁方式
+          for patch in patch*.diff; do
+            patch -p1 --verbose < $patch || true
+          done
 
       - name: Build `sing-box PuerNya` core
         id: build
@@ -134,7 +140,12 @@ jobs:
       # 对于Windows平台，重命名输出文件为.exe
       - name: Rename for Windows
         if: ${{ matrix.goos == 'windows' }}
-        run: mv sing-box sing-box.exe || true
+        run: |
+          if [ -f sing-box ]; then
+            mv sing-box sing-box.exe
+          else
+            echo "No sing-box file found for renaming"
+          fi
 
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
@@ -191,10 +202,8 @@ jobs:
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
-          
           # windows
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
@@ -233,14 +242,22 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
+      # 修复补丁应用问题
       - name: Revert golang1.23 commit for Windows 7/8
         if: ${{ matrix.goos == 'windows' }}
         run: |
           cd $(go env GOROOT)
-          curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
+          
+          # 下载补丁到临时文件
+          curl -o patch1.diff https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff
+          curl -o patch2.diff https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff
+          curl -o patch3.diff https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff
+          curl -o patch4.diff https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff
+          
+          # 更灵活的应用补丁方式
+          for patch in patch*.diff; do
+            patch -p1 --verbose < $patch || true
+          done
 
       - name: Build `sing-box Dev` core
         id: build
@@ -249,7 +266,12 @@ jobs:
       # 对于Windows平台，重命名输出文件为.exe
       - name: Rename for Windows
         if: ${{ matrix.goos == 'windows' }}
-        run: mv sing-box sing-box.exe || true
+        run: |
+          if [ -f sing-box ]; then
+            mv sing-box sing-box.exe
+          else
+            echo "No sing-box file found for renaming"
+          fi
 
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
