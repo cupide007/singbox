@@ -42,11 +42,9 @@ jobs:
           go-version: ${{ needs.go.outputs.version }}
           
       # 修复 ECH 标签问题
-      - name: Fix ECH build tags (remove deprecated)
+      - name: Fix ECH build tags
         run: |
-          # 删除导致编译问题的文件
           rm -f common/tls/ech_tag_stub.go || true
-          # 从构建文件中移除对该文件的引用
           sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
 
       - name: Get `sing-box PuerNya` version
@@ -55,12 +53,10 @@ jobs:
           git remote add sekai https://github.com/SagerNet/sing-box.git
           git fetch --tags sekai
           full_version=$(CGO_ENABLED=0 go run ./cmd/internal/read_tag)
-          # Extract the main version (e.g., 1.10.0 from 1.10.0-alpha.29-067c81a7)
           main_version=$(echo $full_version | cut -d '-' -f 1)
           echo "Full PuerNya version: $full_version"
           echo "Main PuerNya version: $main_version"
           echo "puernya_version=$main_version" >> $GITHUB_OUTPUT
-          # 移除 with_ech 标签（已弃用）
           echo "puernya_tags=with_quic,with_dhcp,with_wireguard,with_shadowsocksr,with_utls,with_clash_api,with_gvisor" >> $GITHUB_OUTPUT
   
   puernya_cross:
@@ -77,8 +73,14 @@ jobs:
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
+          
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
+          
+          # windows
+          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
+          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
+          - { name: windows-arm64, goos: windows, goarch: arm64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -106,11 +108,9 @@ jobs:
         run: sed -i 's/sniffHosts/sniffHost/' ./experimental/clashapi/trafficontrol/tracker.go
           
       # 确保解决 ECH 标签问题
-      - name: Fix ECH build tags (ensure)
+      - name: Fix ECH build tags
         run: |
-          # 确保删除问题文件
           rm -f common/tls/ech_tag_stub.go || true
-          # 确保移出引用
           sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
 
       - name: Setup `Go`
@@ -131,11 +131,16 @@ jobs:
         id: build
         run: go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${puernya_VERSION}' -s -w -buildid=" -tags "${puernya_TAGS}" ./cmd/sing-box
 
+      # 对于Windows平台，重命名输出文件为.exe
+      - name: Rename for Windows
+        if: ${{ matrix.goos == 'windows' }}
+        run: mv sing-box sing-box.exe || true
+
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
         with:
           name: sing-box-puernya-${{ matrix.name }}
-          path: sing-box*
+          path: ${{ (matrix.goos == 'windows' && 'sing-box.exe') || 'sing-box' }}
           compression-level: 9
           
   dev:
@@ -158,7 +163,7 @@ jobs:
           go-version: ${{ needs.go.outputs.version }}
           
       # 修复 dev 分支的 ECH 问题
-      - name: Fix ECH build tags (dev)
+      - name: Fix ECH build tags
         run: |
           rm -f common/tls/ech_tag_stub.go || true
           sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
@@ -170,7 +175,6 @@ jobs:
           git fetch --tags sekai
           dev_version=$(CGO_ENABLED=0 go run ./cmd/internal/read_tag)
           echo dev_version=$dev_version >> $GITHUB_OUTPUT
-          # 移除 with_ech 标签（已弃用）
           echo dev_tags=with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls >> $GITHUB_OUTPUT
           
   dev_cross:
@@ -187,8 +191,14 @@ jobs:
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
+          
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
+          
+          # windows
+          - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
+          - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
+          - { name: windows-arm64, goos: windows, goarch: arm64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -212,8 +222,8 @@ jobs:
           ref: dev
           fetch-depth: 1
 
-      # 确保解决 dev 分支的 ECH 问题
-      - name: Fix ECH build tags (dev ensure)
+      # 确保解决 ECH 问题
+      - name: Fix ECH build tags
         run: |
           rm -f common/tls/ech_tag_stub.go || true
           sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
@@ -236,11 +246,16 @@ jobs:
         id: build
         run: go build -v -trimpath -ldflags "-checklinkname=0 -X 'github.com/sagernet/sing-box/constant.Version=${dev_VERSION}' -s -w -buildid=" -tags "${dev_TAGS}" ./cmd/sing-box
 
+      # 对于Windows平台，重命名输出文件为.exe
+      - name: Rename for Windows
+        if: ${{ matrix.goos == 'windows' }}
+        run: mv sing-box sing-box.exe || true
+
       - name: Upload files to workspace
         uses: actions/upload-artifact@v4
         with:
           name: sing-box-dev-${{ matrix.name }}
-          path: sing-box*
+          path: ${{ (matrix.goos == 'windows' && 'sing-box.exe') || 'sing-box' }}
           compression-level: 9
 
 
@@ -256,7 +271,7 @@ jobs:
       dev_VERSION: ${{ needs.dev.outputs.dev_version }}
     steps:
       - name: Clone Repository
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
         
       - name: Download files from workspace
         uses: actions/download-artifact@v4
@@ -266,55 +281,76 @@ jobs:
       - name: List downloaded files
         run: ls -R ./tmp-sing-box/
 
-      - name: Zip `sing-box` cores by `tar`
-        run: |
-          mkdir -p ./tmp-sing-box/compress/
-          archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64)
-          new_name=(amd64 amd64v3 armv5 armv6 armv7 armv8 mips-softfloat mipsle-hardfloat mipsle-softfloat arm64)
-          # `PuerNya` cores
-          for((i=0;i<10;i++));do
-            if [ -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ]; then
-              mv -f "./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
-              chmod +x ./tmp-sing-box/CrashCore
-              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${new_name[i]}-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
-            else
-              echo "File not found: ./tmp-sing-box/sing-box-puernya-linux-${archs[i]}/sing-box"
-            fi
-          done
-          # `PuerNya` cores for Android
-          if [ -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ]; then
-            mv -f "./tmp-sing-box/sing-box-puernya-android-arm64/sing-box" ./tmp-sing-box/CrashCore
-            chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-arm64-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
-          else
-            echo "File not found: ./tmp-sing-box/sing-box-puernya-android-arm64/sing-box"
-          fi
-          # `dev` cores
-          for((i=0;i<10;i++));do
-            if [ -f "./tmp-sing-box/sing-box-dev-linux-${archs[i]}/sing-box" ]; then
-              mv -f "./tmp-sing-box/sing-box-dev-linux-${archs[i]}/sing-box" ./tmp-sing-box/CrashCore
-              chmod +x ./tmp-sing-box/CrashCore
-              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-linux-${new_name[i]}-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
-            else
-              echo "File not found: ./tmp-sing-box/sing-box-dev-linux-${archs[i]}/sing-box"
-            fi
-          done
-          # `dev` cores for Android
-          if [ -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ]; then
-            mv -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ./tmp-sing-box/CrashCore
-            chmod +x ./tmp-sing-box/CrashCore
-            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-android-arm64-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
-          else
-            echo "File not found: ./tmp-sing-box/sing-box-dev-android-arm64/sing-box"
-          fi
-
-      - name: Move `sing-box` cores
+      - name: Prepare directories
         run: |
           mkdir -p ./sing-box/
-          mv -f ./tmp-sing-box/compress/* ./sing-box/
-          # 清理临时文件
-          rm -rf ./tmp-sing-box
+          mkdir -p ./tmp-sing-box/compress/
+
+      - name: Process non-Windows platforms
+        run: |
+          # 定义支持的Linux和Android架构
+          linux_archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
+          android_archs=(arm64)
           
+          # PuerNya Linux版本
+          for arch in "${linux_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-puernya-linux-${arch}/sing-box" ]; then
+              mv -f "./tmp-sing-box/sing-box-puernya-linux-${arch}/sing-box" ./tmp-sing-box/CrashCore
+              chmod +x ./tmp-sing-box/CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-linux-${arch}-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            fi
+          done
+          
+          # PuerNya Android版本
+          for arch in "${android_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-puernya-android-${arch}/sing-box" ]; then
+              mv -f "./tmp-sing-box/sing-box-puernya-android-${arch}/sing-box" ./tmp-sing-box/CrashCore
+              chmod +x ./tmp-sing-box/CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-puernya-android-${arch}-${{ env.puernya_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            fi
+          done
+          
+          # Dev Linux版本
+          for arch in "${linux_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-dev-linux-${arch}/sing-box" ]; then
+              mv -f "./tmp-sing-box/sing-box-dev-linux-${arch}/sing-box" ./tmp-sing-box/CrashCore
+              chmod +x ./tmp-sing-box/CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-linux-${arch}-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            fi
+          done
+          
+          # Dev Android版本
+          for arch in "${android_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-dev-android-${arch}/sing-box" ]; then
+              mv -f "./tmp-sing-box/sing-box-dev-android-${arch}/sing-box" ./tmp-sing-box/CrashCore
+              chmod +x ./tmp-sing-box/CrashCore
+              tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-android-${arch}-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
+            fi
+          done
+
+      - name: Process Windows platforms
+        run: |
+          windows_archs=(amd64 amd64-v3 arm64)
+          
+          # PuerNya Windows版本
+          for arch in "${windows_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-puernya-windows-${arch}/sing-box.exe" ]; then
+              mv -f "./tmp-sing-box/sing-box-puernya-windows-${arch}/sing-box.exe" "./sing-box/sing-box-puernya-windows-${arch}-${{ env.puernya_VERSION }}.exe"
+            fi
+          done
+          
+          # Dev Windows版本
+          for arch in "${windows_archs[@]}"; do
+            if [ -f "./tmp-sing-box/sing-box-dev-windows-${arch}/sing-box.exe" ]; then
+              mv -f "./tmp-sing-box/sing-box-dev-windows-${arch}/sing-box.exe" "./sing-box/sing-box-dev-windows-${arch}-${{ env.dev_VERSION }}.exe"
+            fi
+          done
+
+      - name: Move all files to final location
+        run: |
+          mv -f ./tmp-sing-box/compress/* ./sing-box/
+          rm -rf ./tmp-sing-box
+
       - name: Release and upload `sing-box` assets (dev release)
         uses: svenstaro/upload-release-action@v2
         with:
@@ -345,8 +381,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b sing-box
-          git add ./sing-box-puernya* && git commit -m "更新 sing-box 内核 PuerNya 版至 v${{ env.puernya_VERSION }}"
-          git add ./sing-box-dev* && git commit -m "更新 sing-box 内核 Dev 版至 v${{ env.dev_VERSION }}"
+          git add . && git commit -m "更新 sing-box 内核: PuerNya v${{ env.puernya_VERSION }}, Dev v${{ env.dev_VERSION }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin sing-box
 
@@ -354,5 +389,5 @@ jobs:
         run: |
           cd ./sing-box/ || exit 1
           for file in $(ls); do
-            curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@sing-box/${file}"
+            curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@sing-box/$file"
           done
