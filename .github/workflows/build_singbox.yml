@@ -3,7 +3,7 @@ name: Update sing-box
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 18 * * *"  # 修复 cron 表达式中的语法
+    - cron: "30 18 * * *"
   push:
     branches:
       - main
@@ -116,22 +116,13 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
-      # 修复补丁应用问题
-      - name: Revert golang1.23 commit for Windows 7/8
-        if: ${{ matrix.goos == 'windows' }}
+      # 修复 Windows 随机数生成器问题
+      - name: Patch Windows RNG for older Go versions
+        if: ${{ matrix.goos == 'windows' && needs.go.outputs.version < '1.20.0' }}
         run: |
-          cd $(go env GOROOT)
-          
-          # 下载补丁到临时文件
-          curl -o patch1.diff https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff
-          curl -o patch2.diff https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff
-          curl -o patch3.diff https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff
-          curl -o patch4.diff https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff
-          
-          # 更灵活的应用补丁方式
-          for patch in patch*.diff; do
-            patch -p1 --verbose < $patch || true
-          done
+          go env GOROOT
+          curl -o rand_patch.diff https://patch-diff.githubusercontent.com/raw/golang/go/pull/53119.diff
+          patch -p1 -d $(go env GOROOT) < rand_patch.diff || true
 
       - name: Build `sing-box PuerNya` core
         id: build
@@ -242,22 +233,13 @@ jobs:
         with:
           go-version: ${{ needs.go.outputs.version }}
 
-      # 修复补丁应用问题
-      - name: Revert golang1.23 commit for Windows 7/8
-        if: ${{ matrix.goos == 'windows' }}
+      # 修复 Windows 随机数生成器问题
+      - name: Patch Windows RNG for older Go versions
+        if: ${{ matrix.goos == 'windows' && needs.go.outputs.version < '1.20.0' }}
         run: |
-          cd $(go env GOROOT)
-          
-          # 下载补丁到临时文件
-          curl -o patch1.diff https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff
-          curl -o patch2.diff https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff
-          curl -o patch3.diff https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff
-          curl -o patch4.diff https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff
-          
-          # 更灵活的应用补丁方式
-          for patch in patch*.diff; do
-            patch -p1 --verbose < $patch || true
-          done
+          go env GOROOT
+          curl -o rand_patch.diff https://patch-diff.githubusercontent.com/raw/golang/go/pull/53119.diff
+          patch -p1 -d $(go env GOROOT) < rand_patch.diff || true
 
       - name: Build `sing-box Dev` core
         id: build
