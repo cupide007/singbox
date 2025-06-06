@@ -72,7 +72,7 @@ jobs:
           - { name: linux-amd64-v3, goos: linux, goarch: amd64, goamd64: v3 }
           - { name: linux-armv5, goos: linux, goarch: arm, goarm: 5 }
           - { name: linux-armv6, goos: linux, goarch: arm, goarm: 6 }
-          -极 name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
+          - { name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
           - { name: linux-arm64, goos: linux, goarch: arm64 }
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
