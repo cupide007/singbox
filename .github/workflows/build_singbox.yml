@@ -92,7 +92,7 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       CGO_ENABLED: 0
-      puernya_TAGS: ${{ needs.puernya.outputs.puern极_tags }}
+      puernya_TAGS: ${{ needs.puernya.outputs.puernya_tags }}
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
     steps:
       - name: Checkout `building`
@@ -230,7 +230,7 @@ jobs:
           curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 极
+          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
 
       - name: Build `sing-box Dev` core
         id: build
@@ -301,7 +301,7 @@ jobs:
           done
           # `dev` cores for Android
           if [ -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ]; then
-            mv -f "./tmp-sing-box/sing-box-dev-android-arm64/s极-box" ./tmp-sing-box/CrashCore
+            mv -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-android-arm64-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           else
