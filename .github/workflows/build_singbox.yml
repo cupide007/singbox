@@ -40,6 +40,14 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ needs.go.outputs.version }}
+          
+      # 修复 ECH 标签问题
+      - name: Fix ECH build tags (remove deprecated)
+        run: |
+          # 删除导致编译问题的文件
+          rm -f common/tls/ech_tag_stub.go || true
+          # 从构建文件中移除对该文件的引用
+          sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
 
       - name: Get `sing-box PuerNya` version
         id: puernya
@@ -52,7 +60,8 @@ jobs:
           echo "Full PuerNya version: $full_version"
           echo "Main PuerNya version: $main_version"
           echo "puernya_version=$main_version" >> $GITHUB_OUTPUT
-          echo "puernya_tags=with_quic,with_dhcp,with_wireguard,with_shadowsocksr,with_ech,with_utls,with_clash_api,with_gvisor" >> $GITHUB_OUTPUT
+          # 移除 with_ech 标签（已弃用）
+          echo "puernya_tags=with_quic,with_dhcp,with_wireguard,with_shadowsocksr,with_utls,with_clash_api,with_gvisor" >> $GITHUB_OUTPUT
   
   puernya_cross:
     strategy:
@@ -63,15 +72,11 @@ jobs:
           - { name: linux-amd64-v3, goos: linux, goarch: amd64, goamd64: v3 }
           - { name: linux-armv5, goos: linux, goarch: arm, goarm: 5 }
           - { name: linux-armv6, goos: linux, goarch: arm, goarm: 6 }
-          - { name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
+          -极 name: linux-armv7, goos: linux, goarch: arm, goarm: 7 }
           - { name: linux-arm64, goos: linux, goarch: arm64 }
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          # windows
-          # - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          # - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          # - { name: windows-arm64, goos: windows, goarch: arm64 }
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
 
@@ -87,7 +92,7 @@ jobs:
       GOARM: ${{ matrix.goarm }}
       GOMIPS: ${{ matrix.gomips }}
       CGO_ENABLED: 0
-      puernya_TAGS: ${{ needs.puernya.outputs.puernya_tags }}
+      puernya_TAGS: ${{ needs.puernya.outputs.puern极_tags }}
       puernya_VERSION: ${{ needs.puernya.outputs.puernya_version }}
     steps:
       - name: Checkout `building`
@@ -99,12 +104,20 @@ jobs:
 
       - name: Fix sniff
         run: sed -i 's/sniffHosts/sniffHost/' ./experimental/clashapi/trafficontrol/tracker.go
+          
+      # 确保解决 ECH 标签问题
+      - name: Fix ECH build tags (ensure)
+        run: |
+          # 确保删除问题文件
+          rm -f common/tls/ech_tag_stub.go || true
+          # 确保移出引用
+          sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
 
       - name: Setup `Go`
         uses: actions/setup-go@v5
         with:
           go-version: ${{ needs.go.outputs.version }}
-          
+
       - name: Revert golang1.23 commit for Windows 7/8
         if: ${{ matrix.goos == 'windows' }}
         run: |
@@ -143,6 +156,12 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ needs.go.outputs.version }}
+          
+      # 修复 dev 分支的 ECH 问题
+      - name: Fix ECH build tags (dev)
+        run: |
+          rm -f common/tls/ech_tag_stub.go || true
+          sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
 
       - name: Get `sing-box Dev` version
         id: dev
@@ -151,7 +170,8 @@ jobs:
           git fetch --tags sekai
           dev_version=$(CGO_ENABLED=0 go run ./cmd/internal/read_tag)
           echo dev_version=$dev_version >> $GITHUB_OUTPUT
-          echo dev_tags=with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls,with_ech >> $GITHUB_OUTPUT
+          # 移除 with_ech 标签（已弃用）
+          echo dev_tags=with_gvisor,with_dhcp,with_wireguard,with_clash_api,with_quic,with_utls >> $GITHUB_OUTPUT
           
   dev_cross:
     strategy:
@@ -167,11 +187,6 @@ jobs:
           - { name: linux-mips-softfloat, goos: linux, goarch: mips, gomips: softfloat }
           - { name: linux-mipsle-softfloat, goos: linux, goarch: mipsle, gomips: softfloat }
           - { name: linux-mipsle-hardfloat, goos: linux, goarch: mipsle, gomips: hardfloat }
-          # windows
-          # - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
-          # - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
-          # - { name: windows-arm64, goos: windows, goarch: arm64 }
-
           # android
           - { name: android-arm64, goos: android, goarch: arm64 }
 
@@ -197,6 +212,12 @@ jobs:
           ref: dev
           fetch-depth: 1
 
+      # 确保解决 dev 分支的 ECH 问题
+      - name: Fix ECH build tags (dev ensure)
+        run: |
+          rm -f common/tls/ech_tag_stub.go || true
+          sed -i '/ech_tag_stub.go/d' common/tls/tls.go || true
+
       - name: Setup `Go`
         uses: actions/setup-go@v5
         with:
@@ -209,7 +230,7 @@ jobs:
           curl https://github.com/MetaCubeX/go/commit/9ac42137ef6730e8b7daca016ece831297a1d75b.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/21290de8a4c91408de7c2b5b68757b1e90af49dd.diff | patch --verbose -p 1
           curl https://github.com/MetaCubeX/go/commit/6a31d3fa8e47ddabc10bd97bff10d9a85f4cfb76.diff | patch --verbose -p 1
-          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 1
+          curl https://github.com/MetaCubeX/go/commit/69e2eed6dd0f6d815ebf15797761c13f31213dd6.diff | patch --verbose -p 极
 
       - name: Build `sing-box Dev` core
         id: build
@@ -280,7 +301,7 @@ jobs:
           done
           # `dev` cores for Android
           if [ -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ]; then
-            mv -f "./tmp-sing-box/sing-box-dev-android-arm64/sing-box" ./tmp-sing-box/CrashCore
+            mv -f "./tmp-sing-box/sing-box-dev-android-arm64/s极-box" ./tmp-sing-box/CrashCore
             chmod +x ./tmp-sing-box/CrashCore
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-dev-android-arm64-${{ env.dev_VERSION }}.tar.gz" -C ./tmp-sing-box/ ./CrashCore
           else
@@ -291,16 +312,8 @@ jobs:
         run: |
           mkdir -p ./sing-box/
           mv -f ./tmp-sing-box/compress/* ./sing-box/
-          # `PuerNya` cores for Windows
-          # mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64-${{ env.puernya_VERSION }}.exe
-          # mv -f ./tmp-sing-box/sing-box-puernya-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-puernya-windows-amd64v3-${{ env.puernya_VERSION }}.exe
-          # mv -f ./tmp-sing-box/sing-box-puernya-windows-arm64/sing-box.exe ./sing-box/sing-box-puernya-windows-arm64-${{ env.puernya_VERSION }}.exe
-
-          # `dev` cores for Windows
-          # mv -f ./tmp-sing-box/sing-box-dev-windows-amd64/sing-box.exe ./sing-box/sing-box-dev-windows-amd64-${{ env.dev_VERSION }}.exe
-          # mv -f ./tmp-sing-box/sing-box-dev-windows-amd64-v3/sing-box.exe ./sing-box/sing-box-dev-windows-amd64v3-${{ env.dev_VERSION }}.exe
-          # mv -f ./tmp-sing-box/sing-box-dev-windows-arm64/sing-box.exe ./sing-box/sing-box-dev-windows-arm64-${{ env.dev_VERSION }}.exe
-          # rm -rf ./tmp*
+          # 清理临时文件
+          rm -rf ./tmp-sing-box
           
       - name: Release and upload `sing-box` assets (dev release)
         uses: svenstaro/upload-release-action@v2
@@ -333,7 +346,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b sing-box
           git add ./sing-box-puernya* && git commit -m "更新 sing-box 内核 PuerNya 版至 v${{ env.puernya_VERSION }}"
-          git add ./sing-box-puernya_dev* && git commit -m "更新 sing-box 内核 PuerNya_dev 版至 v${{ env.dev_VERSION }}"
+          git add ./sing-box-dev* && git commit -m "更新 sing-box 内核 Dev 版至 v${{ env.dev_VERSION }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin sing-box
 
